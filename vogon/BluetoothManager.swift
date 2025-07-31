@@ -115,18 +115,7 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 		}
 		
 		service.characteristics!.forEach { c in
-			peripheral.discoverDescriptors(for: c)
 			peripheral.readValue(for: c)
-		}
-	}
-	
-	func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: (any Error)?) {
-		if let error = error {
-			print("Error discovering descriptors: \(error.localizedDescription)")
-		}
-		
-		characteristic.descriptors!.forEach { d in
-			peripheral.readValue(for: d)
 		}
 	}
 	
@@ -138,19 +127,12 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 		self.characteristics[characteristic.uuid] = characteristic
 	}
 	
-	func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: (any Error)?) {
-		if let error = error {
-			print("Error reading descriptor: \(error.localizedDescription)")
-		}
-		
-		let characteristic = descriptor.characteristic!
-		self.characteristics[characteristic.uuid] = characteristic
-	}
-	
 	func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: (any Error)?) {
 		if let error = error {
 			print("Error writing characteristic: \(error.localizedDescription)")
 		}
+		
+		peripheral.readValue(for: characteristic)
 	}
 	
 	//	===== ===== ===== =====
