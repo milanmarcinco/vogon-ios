@@ -1,10 +1,3 @@
-//
-//  DeviceDetailView.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 31/07/2025.
-//
-
 import SwiftUI
 import CoreBluetooth
 

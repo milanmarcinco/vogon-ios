@@ -1,10 +1,3 @@
-//
-//  ConfigurationView.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 15/07/2025.
-//
-
 import SwiftUI
 import CoreBluetooth
 
@@ -31,25 +24,27 @@ struct ConfigurationView: View {
 	}
 	
 	private func handleSave() {
-		values.forEach { key, value in
+		values.forEach { key, field in
 			var newData = Data()
-			
-			switch value.valueType {
+
+			switch field.valueType {
 				case .number:
-					if let intValue = UInt16(value.value) {
+					if let intValue = UInt16(field.value) {
 						var littleEndian = intValue.littleEndian
-						newData = Data(
-							bytes: &littleEndian,
-							count: MemoryLayout<UInt16>.size
-						)
+						newData = withUnsafeBytes(of: &littleEndian) { bytes in
+							Data(bytes)
+						}
 					}
 				case .string:
-					newData = value.value.data(using: .utf8)!
+					if let data = field.value.data(using: .utf8) {
+						newData = data
+					}
 			}
-			
-			let c = btm.characteristics[key]!
+
+			guard let c = btm.characteristics[key] else { return }
+
 			if newData != c.value {
-				btm.write(data: newData, toCharacteristic: c)
+				btm.write(to: c, data: newData)
 			}
 		}
 	}

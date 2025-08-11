@@ -1,10 +1,3 @@
-//
-//  DevicesListView.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 23/07/2025.
-//
-
 import SwiftUI
 import CoreBluetooth
 
@@ -15,11 +8,16 @@ struct DevicesListView: View {
 	var body: some View {
 		NavigationStack(path: $navPath) {
 			FoundDevicesList()
-				.onChange(of: btm.connectedPeripheral) { _, newValue in
-					if let peripheral = newValue {
+				.onChange(of: btm.connectedPeripheral) { _, newPeripheral in
+					if let peripheral = newPeripheral {
 						navPath.append(peripheral)
-					} else {
+					} else if !navPath.isEmpty {
 						navPath.removeLast()
+					}
+				}
+				.onChange(of: navPath) { _, newPath in
+					if newPath.isEmpty && btm.connectedPeripheral != nil {
+						btm.disconnect()
 					}
 				}
 				.navigationDestination(for: CBPeripheral.self) { p in
@@ -44,7 +42,7 @@ struct FoundDevicesList: View {
 				footer: btm.scanning ? Text("Scanning...") : nil
 			) {
 				ForEach(btm.scannedPeripherals, id: \.identifier) { peripheral in
-					let isConnecting = peripheral == btm.pendingPeripheral
+					let isConnecting = peripheral.identifier == btm.pendingPeripheral?.identifier
 					
 					FoundDeviceItem(
 						peripheral: peripheral,
@@ -69,7 +67,7 @@ struct FoundDeviceItem: View {
 	
 	var body: some View {
 		let uuidShort = String(peripheral.identifier.uuidString.prefix(5))
-		let peripheralLabel = "\(peripheral.name ?? uuidShort)"
+	let peripheralLabel = peripheral.name ?? uuidShort
 		
 		Button { handleConnect() } label: {
 			HStack() {

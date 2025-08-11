@@ -1,10 +1,3 @@
-//
-//  MainViewModel.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 07/07/2025.
-//
-
 import SwiftUI
 import CoreBluetooth
 
@@ -13,14 +6,14 @@ let CONFIGURATION_SERVICE_UUID = CBUUID(string: "d0a823a6-fa98-4597-b0c1-d8577be
 final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
 	var centralManager: CBCentralManager!
 	
-	@Published var state: CBManagerState = .unknown
-	@Published var scanning: Bool = false
-	@Published var scannedPeripherals: [CBPeripheral] = []
-	
-	@Published var pendingPeripheral: CBPeripheral?
-	@Published var connectedPeripheral: CBPeripheral?
+	@Published private(set) var state: CBManagerState = .unknown
+	@Published private(set) var scanning: Bool = false
+	@Published private(set) var scannedPeripherals: [CBPeripheral] = []
 
-	@Published var characteristics: [CBUUID: CBCharacteristic] = [:]
+	@Published private(set) var pendingPeripheral: CBPeripheral?
+	@Published private(set) var connectedPeripheral: CBPeripheral?
+
+	@Published private(set) var characteristics: [CBUUID: CBCharacteristic] = [:]
 	
 	override init() {
 		super.init()
@@ -101,11 +94,12 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 			print("Error discovering services: \(error.localizedDescription)")
 		}
 		
-		let configService = peripheral.services!.first(where: { s in
+		guard let services = peripheral.services else { return }
+		let configService = services.first(where: { s in 
 			s.uuid == CONFIGURATION_SERVICE_UUID
 		})
-		
-		guard let configService = configService else { return }
+
+		guard let configService else { return }
 		peripheral.discoverCharacteristics(nil, for: configService)
 	}
 	
@@ -114,7 +108,9 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 			print("Error discovering characteristics: \(error.localizedDescription)")
 		}
 		
-		service.characteristics!.forEach { c in
+		guard let characteristics = service.characteristics else { return }
+
+		characteristics.forEach { c in
 			peripheral.readValue(for: c)
 		}
 	}
@@ -168,9 +164,8 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 		}
 	}
 	
-	func write(data: Data, toCharacteristic: CBCharacteristic) {
-		if let p = self.connectedPeripheral {
-			p.writeValue(data, for: toCharacteristic, type: .withResponse)
-		}
+	func write(to characteristic: CBCharacteristic, data: Data) {
+		guard let p = self.connectedPeripheral else { return }
+		p.writeValue(data, for: characteristic, type: .withResponse)
 	}
 }

@@ -1,16 +1,5 @@
-//
-//  Helpers.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 27/07/2025.
-//
-
+import Foundation
 import CoreBluetooth
-
-enum CharacteristicValueType {
-	case number
-	case string
-}
 
 func getCharacteristicValue(_ characteristic: CBCharacteristic, as type: CharacteristicValueType) -> String {
 	var value = "N/A"

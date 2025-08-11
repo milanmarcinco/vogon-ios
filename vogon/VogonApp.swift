@@ -1,17 +1,13 @@
-//
-//  VogonApp.swift
-//  Vogon
-//
-//  Created by Milan Marcinčo on 07/07/2025.
-//
-
 import SwiftUI
 
 @main
 struct VogonApp: App {
+    @StateObject private var bluetoothManager = BluetoothManager()
+
     var body: some Scene {
         WindowGroup {
             MainView()
+                .environmentObject(bluetoothManager)
         }
     }
 }
