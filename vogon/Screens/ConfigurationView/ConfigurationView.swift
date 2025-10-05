@@ -1,5 +1,5 @@
-import SwiftUI
 import CoreBluetooth
+import SwiftUI
 
 struct CharacteristicFieldValue {
 	let value: String
@@ -8,10 +8,10 @@ struct CharacteristicFieldValue {
 
 struct ConfigurationView: View {
 	let characteristicGroup: CharacteristicGroup
-	
+
 	@EnvironmentObject var btm: BluetoothManager
 	@State private var values: [CBUUID: CharacteristicFieldValue] = [:]
-	
+
 	private func binding(for uuid: CBUUID, valueType: CharacteristicValueType) -> Binding<String> {
 		Binding(
 			get: {
@@ -22,23 +22,23 @@ struct ConfigurationView: View {
 			}
 		)
 	}
-	
+
 	private func handleSave() {
 		values.forEach { key, field in
 			var newData = Data()
 
 			switch field.valueType {
-				case .number:
-					if let intValue = UInt16(field.value) {
-						var littleEndian = intValue.littleEndian
-						newData = withUnsafeBytes(of: &littleEndian) { bytes in
-							Data(bytes)
-						}
+			case .number:
+				if let intValue = UInt16(field.value) {
+					var littleEndian = intValue.littleEndian
+					newData = withUnsafeBytes(of: &littleEndian) { bytes in
+						Data(bytes)
 					}
-				case .string:
-					if let data = field.value.data(using: .utf8) {
-						newData = data
-					}
+				}
+			case .string:
+				if let data = field.value.data(using: .utf8) {
+					newData = data
+				}
 			}
 
 			guard let c = btm.characteristics[key] else { return }
@@ -48,7 +48,7 @@ struct ConfigurationView: View {
 			}
 		}
 	}
-	
+
 	var body: some View {
 		List {
 			Section(header: Text(characteristicGroup.name)) {

@@ -1,10 +1,10 @@
-import SwiftUI
 import CoreBluetooth
+import SwiftUI
 
 struct DevicesListView: View {
 	@State private var navPath = NavigationPath()
 	@EnvironmentObject var btm: BluetoothManager
-	
+
 	var body: some View {
 		NavigationStack(path: $navPath) {
 			FoundDevicesList()
@@ -30,11 +30,11 @@ struct DevicesListView: View {
 
 struct FoundDevicesList: View {
 	@EnvironmentObject var btm: BluetoothManager
-	
+
 	private func handleConnect(_ peripheral: CBPeripheral) {
 		btm.connect(peripheral: peripheral)
 	}
-	
+
 	var body: some View {
 		List {
 			Section(
@@ -43,14 +43,14 @@ struct FoundDevicesList: View {
 			) {
 				ForEach(btm.scannedPeripherals, id: \.identifier) { peripheral in
 					let isConnecting = peripheral.identifier == btm.pendingPeripheral?.identifier
-					
+
 					FoundDeviceItem(
 						peripheral: peripheral,
 						isConnecting: isConnecting,
 						handleConnect: { handleConnect(peripheral) }
 					)
 				}
-				
+
 				if btm.scannedPeripherals.isEmpty {
 					Text("No devices found")
 						.foregroundStyle(.secondary)
@@ -64,16 +64,18 @@ struct FoundDeviceItem: View {
 	let peripheral: CBPeripheral
 	let isConnecting: Bool
 	let handleConnect: () -> Void
-	
+
 	var body: some View {
 		let uuidShort = String(peripheral.identifier.uuidString.prefix(5))
-	let peripheralLabel = peripheral.name ?? uuidShort
-		
-		Button { handleConnect() } label: {
-			HStack() {
+		let peripheralLabel = peripheral.name ?? uuidShort
+
+		Button {
+			handleConnect()
+		} label: {
+			HStack {
 				Text(peripheralLabel)
 				Spacer()
-				
+
 				if isConnecting {
 					ProgressView()
 				}

@@ -1,15 +1,15 @@
-import SwiftUI
 import CoreBluetooth
+import SwiftUI
 
 struct DeviceDetailView: View {
 	let peripheral: CBPeripheral
-	
+
 	@EnvironmentObject var btm: BluetoothManager
-	
+
 	private func handleDisconnect() {
 		btm.disconnect()
 	}
-	
+
 	var body: some View {
 		List {
 			Section(header: Text("Settings & configuration")) {
