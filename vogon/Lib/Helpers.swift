@@ -1,7 +1,7 @@
 import Foundation
 import CoreBluetooth
 
-func getCharacteristicValue(_ characteristic: CBCharacteristic, as type: CharacteristicValueType) -> String {
+func getCharacteristicValue(_ characteristic: CBCharacteristic, as type: ConfigOptionValueType) -> String {
 	var value = ""
 	
     if let data = characteristic.value {

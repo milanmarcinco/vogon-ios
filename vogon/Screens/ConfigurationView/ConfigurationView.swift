@@ -3,16 +3,16 @@ import SwiftUI
 
 struct CharacteristicFieldValue {
 	let value: String
-	let valueType: CharacteristicValueType
+	let valueType: ConfigOptionValueType
 }
 
 struct ConfigurationView: View {
-	let characteristicGroup: CharacteristicGroup
+	let configCollection: ConfigCollection
 
 	@EnvironmentObject var btm: BluetoothManager
 	@State private var values: [CBUUID: CharacteristicFieldValue] = [:]
 
-	private func binding(for uuid: CBUUID, valueType: CharacteristicValueType) -> Binding<String> {
+	private func binding(for uuid: CBUUID, valueType: ConfigOptionValueType) -> Binding<String> {
 		Binding(
 			get: {
 				values[uuid]?.value ?? ""
@@ -51,14 +51,20 @@ struct ConfigurationView: View {
 
 	var body: some View {
 		List {
-			Section(header: Text(characteristicGroup.name)) {
-				ForEach(characteristicGroup.fields, id: \.uuid) { field in
-					CharacteristicField(
-						name: field.name,
-						uuid: CBUUID(string: field.uuid),
-						valueType: field.valueType,
-						value: binding(for: CBUUID(string: field.uuid), valueType: field.valueType)
-					)
+			ForEach(configCollection.sections, id: \.id) { section in
+				Section(
+					header: section.name != nil ? Text(section.name!) : nil,
+					footer: section.description != nil ? Text(section.description!) : nil
+				) {
+					ForEach(section.options, id: \.uuid) { option in
+						ConfigurationField(
+							name: option.name,
+							hint: option.hint,
+							uuid: CBUUID(string: option.uuid),
+							valueType: option.valueType,
+							value: binding(for: CBUUID(string: option.uuid), valueType: option.valueType)
+						)
+					}
 				}
 			}
 		}
@@ -67,6 +73,6 @@ struct ConfigurationView: View {
 				Button("Save") { handleSave() }
 			}
 		}
-		.navigationTitle("Configuration")
+		.navigationTitle(configCollection.name)
 	}
 }

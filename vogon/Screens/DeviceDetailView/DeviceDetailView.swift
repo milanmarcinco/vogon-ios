@@ -13,9 +13,11 @@ struct DeviceDetailView: View {
 	var body: some View {
 		List {
 			Section(header: Text("Settings & configuration")) {
-				ForEach(characteristicGroups, id: \.name) { group in
-					NavigationLink(group.name) {
-						ConfigurationView(characteristicGroup: group)
+				ForEach(config, id: \.name) { collection in
+					NavigationLink(collection.name) {
+						ConfigurationView(
+							configCollection: collection
+						)
 					}
 				}
 			}

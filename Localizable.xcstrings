@@ -1,0 +1,47 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "🐸 %@" : {
+
+    },
+    "🐸 Vogon" : {
+
+    },
+    "Configure" : {
+
+    },
+    "Disconnect" : {
+
+    },
+    "Found devices" : {
+
+    },
+    "General" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generalx"
+          }
+        }
+      }
+    },
+    "No devices found" : {
+
+    },
+    "Save" : {
+
+    },
+    "Scanning..." : {
+
+    },
+    "Settings & configuration" : {
+
+    }
+  },
+  "version" : "1.1"
+}

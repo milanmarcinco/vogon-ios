@@ -1,10 +1,11 @@
 import CoreBluetooth
 import SwiftUI
 
-struct CharacteristicField: View {
+struct ConfigurationField: View {
 	let name: String
+	let hint: String?
 	let uuid: CBUUID
-	let valueType: CharacteristicValueType
+	let valueType: ConfigOptionValueType
 
 	@Binding var value: String
 
@@ -35,20 +36,25 @@ struct CharacteristicField: View {
 	}
 
 	var body: some View {
-		Group {
-			LabeledContent {
-				if initialized {
+		LabeledContent {
+			if initialized {
+				HStack(spacing: 0) {
 					TextField("", text: $value)
-						.labelsHidden()
-						.multilineTextAlignment(.trailing)
+					.labelsHidden()
+					.multilineTextAlignment(.trailing)
+					.foregroundStyle(.secondary)
+					.keyboardType(keyboardType)
+
+				if let hint {
+					Text(hint)
 						.foregroundStyle(.secondary)
-						.keyboardType(keyboardType)
-				} else {
-					ProgressView()
 				}
-			} label: {
-				Text(name)
+				}
+			} else {
+				ProgressView()
 			}
+		} label: {
+			Text(name)
 		}
 		.onChange(of: characteristic) { initialize() }
 		.onAppear { initialize() }
