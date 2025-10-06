@@ -41,13 +41,13 @@ struct FoundDevicesList: View {
 				header: Text("Found devices"),
 				footer: btm.scanning ? Text("Scanning...") : nil
 			) {
-				ForEach(btm.scannedPeripherals, id: \.identifier) { peripheral in
-					let isConnecting = peripheral.identifier == btm.pendingPeripheral?.identifier
+				ForEach(btm.scannedPeripherals, id: \.peripheral.identifier) { p in
+					let isConnecting = p.peripheral.identifier == btm.pendingPeripheral?.identifier
 
 					FoundDeviceItem(
-						peripheral: peripheral,
+						peripheral: p.peripheral,
 						isConnecting: isConnecting,
-						handleConnect: { handleConnect(peripheral) }
+						handleConnect: { handleConnect(p.peripheral) }
 					)
 				}
 

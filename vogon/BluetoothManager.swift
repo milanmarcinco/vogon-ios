@@ -3,6 +3,12 @@ import SwiftUI
 
 let CONFIGURATION_SERVICE_UUID = CBUUID(string: "d0a823a6-fa98-4597-b0c1-d8577be0e158")
 
+struct ScannedPeripheral {
+	let peripheral: CBPeripheral
+	var rssi: NSNumber
+	var lastAdvertisedAt: Date
+}
+
 final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate,
 	CBPeripheralDelegate
 {
@@ -10,16 +16,29 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 
 	@Published private(set) var state: CBManagerState = .unknown
 	@Published private(set) var scanning: Bool = false
-	@Published private(set) var scannedPeripherals: [CBPeripheral] = []
+	@Published private(set) var scannedPeripherals: [ScannedPeripheral] = []
 
 	@Published private(set) var pendingPeripheral: CBPeripheral?
 	@Published private(set) var connectedPeripheral: CBPeripheral?
 
 	@Published private(set) var characteristics: [CBUUID: CBCharacteristic] = [:]
 
+	private var cleanupTimer: Timer?
+
 	override init() {
 		super.init()
 		self.centralManager = CBCentralManager(delegate: self, queue: nil)
+
+		cleanupTimer = Timer.scheduledTimer(
+			withTimeInterval: 1,
+			repeats: true
+		) { [weak self] _ in
+			self?.removeStalePeripherals()
+		}
+	}
+
+	deinit {
+		cleanupTimer?.invalidate()
 	}
 
 	func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -34,14 +53,22 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 		_ central: CBCentralManager,
 		didDiscover peripheral: CBPeripheral,
 		advertisementData: [String: Any],
-		rssi RSSI: NSNumber
+		rssi: NSNumber
 	) {
-		let alreadyScanned = self.scannedPeripherals.contains(where: { p in
-			p.identifier == peripheral.identifier
+		let alreadyScannedIndex = self.scannedPeripherals.firstIndex(where: { p in
+			p.peripheral.identifier == peripheral.identifier
 		})
 
-		if !alreadyScanned {
-			self.scannedPeripherals.append(peripheral)
+		let p = ScannedPeripheral(
+			peripheral: peripheral,
+			rssi: rssi,
+			lastAdvertisedAt: Date()
+		)
+
+		if let alreadyScannedIndex {
+			self.scannedPeripherals[alreadyScannedIndex] = p
+		} else {
+			self.scannedPeripherals.append(p)
 		}
 	}
 
@@ -156,6 +183,9 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 		self.centralManager.scanForPeripherals(
 			withServices: [
 				CONFIGURATION_SERVICE_UUID
+			],
+			options: [
+				CBCentralManagerScanOptionAllowDuplicatesKey: true
 			]
 		)
 	}
@@ -163,6 +193,13 @@ final class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelega
 	func stopScan() {
 		self.centralManager.stopScan()
 		self.scanning = false
+	}
+
+	func removeStalePeripherals() {
+		let cutoff = Date().addingTimeInterval(-3)
+		scannedPeripherals.removeAll { p in
+			p.lastAdvertisedAt < cutoff
+		}
 	}
 
 	func connect(peripheral: CBPeripheral) {
