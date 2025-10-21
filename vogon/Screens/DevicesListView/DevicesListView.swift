@@ -3,12 +3,12 @@ import SwiftUI
 
 struct DevicesListView: View {
 	@State private var navPath = NavigationPath()
-	@EnvironmentObject var btm: BluetoothManager
+	@Environment(\.bluetoothManager) var bluetoothManager
 
 	var body: some View {
 		NavigationStack(path: $navPath) {
 			FoundDevicesList()
-				.onChange(of: btm.connectedPeripheral) { _, newPeripheral in
+				.onChange(of: bluetoothManager.connectedPeripheral) { _, newPeripheral in
 					if let peripheral = newPeripheral {
 						navPath.append(peripheral)
 					} else if !navPath.isEmpty {
@@ -16,8 +16,8 @@ struct DevicesListView: View {
 					}
 				}
 				.onChange(of: navPath) { _, newPath in
-					if newPath.isEmpty && btm.connectedPeripheral != nil {
-						btm.disconnect()
+					if newPath.isEmpty && bluetoothManager.connectedPeripheral != nil {
+						bluetoothManager.disconnect()
 					}
 				}
 				.navigationDestination(for: CBPeripheral.self) { p in
@@ -29,20 +29,21 @@ struct DevicesListView: View {
 }
 
 struct FoundDevicesList: View {
-	@EnvironmentObject var btm: BluetoothManager
+	@Environment(\.bluetoothManager) var bluetoothManager
 
 	private func handleConnect(_ peripheral: CBPeripheral) {
-		btm.connect(peripheral: peripheral)
+		bluetoothManager.connect(peripheral: peripheral)
 	}
 
 	var body: some View {
 		List {
 			Section(
 				header: Text("Found devices"),
-				footer: btm.scanning ? Text("Scanning...") : nil
+				footer: bluetoothManager.scanning ? Text("Scanning...") : nil
 			) {
-				ForEach(btm.scannedPeripherals, id: \.peripheral.identifier) { p in
-					let isConnecting = p.peripheral.identifier == btm.pendingPeripheral?.identifier
+				ForEach(bluetoothManager.scannedPeripherals, id: \.peripheral.identifier) { p in
+					let isConnecting =
+						p.peripheral.identifier == bluetoothManager.pendingPeripheral?.identifier
 
 					FoundDeviceItem(
 						peripheral: p.peripheral,
@@ -51,7 +52,7 @@ struct FoundDevicesList: View {
 					)
 				}
 
-				if btm.scannedPeripherals.isEmpty {
+				if bluetoothManager.scannedPeripherals.isEmpty {
 					Text("No devices found")
 						.foregroundStyle(.secondary)
 				}

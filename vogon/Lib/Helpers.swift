@@ -1,22 +1,2 @@
-import Foundation
 import CoreBluetooth
-
-func getCharacteristicValue(_ characteristic: CBCharacteristic, as type: ConfigOptionValueType) -> String {
-	var value = ""
-	
-    if let data = characteristic.value {
-        if data.isEmpty { return value }
-        
-		switch type {
-			case .number:
-				let number = data.withUnsafeBytes { bytes in bytes.load(as: UInt16.self) }
-				value = String(format: "%u", number)
-			default:
-				if let stringValue = String(data: data, encoding: .utf8) {
-					value = stringValue
-				}
-		}
-	}
-	
-	return value
-}
+import Foundation
