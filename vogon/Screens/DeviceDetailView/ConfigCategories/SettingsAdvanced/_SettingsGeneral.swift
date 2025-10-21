@@ -14,7 +14,7 @@ struct SettingsGeneral: View {
           name: "Read interval",
           hint: "m",
           valueType: .number,
-          value: $cfg.samplingInterval,
+          value: $cfg.measurementInterval,
         )
       }
     }

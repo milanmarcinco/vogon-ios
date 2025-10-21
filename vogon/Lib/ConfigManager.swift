@@ -15,7 +15,7 @@ struct Config: Codable {
   let wifi_password: String?
   let wifi_protocol: WifiProtocol?
   let mqtt_broker_url: String?
-  let sampling_interval: Int?
+  let measurement_interval: Int?
   let environmental_bulk_size: Int?
   let environmental_bulk_sleep: Int?
   let particulate_warm_up: Int?
@@ -33,7 +33,7 @@ final class ConfigManager {
   var wifiPassword: String = ""
   var wifiProtocol: WifiProtocol = .wpa2
   var mqttBrokerUrl: String = ""
-  var samplingInterval: String = ""
+  var measurementInterval: String = ""
   var environmentalBulkSize: String = ""
   var environmentalBulkSleep: String = ""
   var particulateWarmUp: String = ""
@@ -61,7 +61,7 @@ final class ConfigManager {
     self.wifiPassword = config.wifi_password ?? ""
     self.wifiProtocol = config.wifi_protocol ?? .wpa2
     self.mqttBrokerUrl = config.mqtt_broker_url ?? ""
-    self.samplingInterval = config.sampling_interval.asString()
+    self.measurementInterval = config.measurement_interval.asString()
     self.environmentalBulkSize = config.environmental_bulk_size.asString()
     self.environmentalBulkSleep = config.environmental_bulk_sleep.asString()
     self.particulateWarmUp = config.particulate_warm_up.asString()
@@ -78,7 +78,7 @@ final class ConfigManager {
       wifi_password: self.wifiPassword,
       wifi_protocol: self.wifiProtocol,
       mqtt_broker_url: self.mqttBrokerUrl,
-      sampling_interval: Int(self.samplingInterval),
+      measurement_interval: Int(self.measurementInterval),
       environmental_bulk_size: Int(self.environmentalBulkSize),
       environmental_bulk_sleep: Int(self.environmentalBulkSleep),
       particulate_warm_up: Int(self.particulateWarmUp),
