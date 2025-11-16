@@ -2,7 +2,9 @@ import CoreBluetooth
 import SwiftUI
 
 let CONFIGURATION_SERVICE_UUID = CBUUID(string: "d0a823a6-fa98-4597-b0c1-d8577be0e158")
+
 let CONFIGURATION_CHARACTERISTIC_UUID = CBUUID(string: "0101")
+let RESTART_CHARACTERISTIC_UUID = CBUUID(string: "0201")
 
 enum BluetoothError: Error {
 	case internalError

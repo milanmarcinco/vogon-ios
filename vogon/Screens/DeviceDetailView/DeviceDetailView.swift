@@ -2,56 +2,104 @@ import CoreBluetooth
 import SwiftUI
 
 struct DeviceDetailView: View {
-	let peripheral: CBPeripheral
+  let peripheral: CBPeripheral
 
-	@Environment(\.bluetoothManager) var bluetoothManager
-	@Environment(\.configManager) var configManager
+  @Environment(\.bluetoothManager) var bluetoothManager
+  @Environment(\.configManager) var configManager
 
-	@State var isReading: Bool = false
-	@State var isWriting: Bool = false
+  struct PendingStates {
+    var load = false
+    var write = false
 
-	private func handleDisconnect() {
-		bluetoothManager.disconnect()
-	}
+    var any: Bool {
+      return load || write
+    }
+  }
 
-	private func handleAppear() {
-		Task {
-			isReading = true
-			try await configManager.loadDefaults()
-			isReading = false
-		}
-	}
+  @State private var pending = PendingStates()
 
-	private func handleSave() {
-		Task {
-			isWriting = true
-			try await configManager.writeConfiguration()
-			isWriting = false
-		}
-	}
+  private func handleDisconnect() {
+    bluetoothManager.disconnect()
+  }
 
-	var body: some View {
-		List {
-			Section(header: Text("Settings & configuration")) {
-				NavigationLink("🛜 WiFi & Sync") { SettingsSync() }
-					.disabled(isReading)
-				NavigationLink("🔧 Advanced") { SettingsAdvanced() }
-					.disabled(isReading)
-			}
-		}
-		.navigationBarBackButtonHidden(true)
-		.navigationTitle("🐸 \(peripheral.name ?? "Unknown")")
-		.onAppear { handleAppear() }
-		.toolbar {
-			ToolbarItem(placement: .topBarLeading) {
-				Button("Disconnect") { handleDisconnect() }
-					.disabled(isWriting)
-			}
+  private func handleAppear() {
+    Task {
+      if configManager.initialized { return }
 
-			ToolbarItem(placement: .topBarTrailing) {
-				Button("Save") { handleSave() }
-					.disabled(isWriting)
-			}
-		}
-	}
+      pending.load = true
+      try await configManager.loadConfiguration()
+      pending.load = false
+    }
+  }
+
+  private func handleLoad() {
+    Task {
+      pending.load = true
+      try await configManager.loadConfiguration()
+      pending.load = false
+    }
+  }
+
+  private func handleSave() {
+    Task {
+      pending.write = true
+      try await configManager.writeConfiguration()
+      pending.write = false
+    }
+  }
+
+  private func handleDiscardAndReboot() {
+    Task {
+      pending.write = true
+      try await configManager.reboot()
+      pending.write = false
+    }
+  }
+
+  private func handleSaveAndReboot() {
+    Task {
+      pending.write = true
+      try await configManager.writeConfiguration()
+      try await configManager.reboot()
+      pending.write = false
+    }
+  }
+
+  var body: some View {
+    List {
+      Section(header: Text("Settings & configuration")) {
+        NavigationLink("🛜 WiFi & Sync") { SettingsSync() }
+          .disabled(pending.load)
+        NavigationLink("🔧 Advanced") { SettingsAdvanced() }
+          .disabled(pending.load)
+      }
+
+      Section {
+        Button("Discard and reboot", role: .destructive, action: handleDiscardAndReboot)
+          .disabled(pending.any)
+
+        Button("Discard changes", action: handleLoad)
+          .disabled(pending.any)
+      }
+
+      Section {
+        Button("Save & reboot", action: handleSaveAndReboot)
+          .disabled(pending.any)
+      }
+    }
+    .navigationBarBackButtonHidden(true)
+    .navigationTitle("🐸 \(peripheral.name ?? "Unknown")")
+    .onAppear { handleAppear() }
+    .toolbar {
+      ToolbarItem(placement: .topBarLeading) {
+        Button("Disconnect") { handleDisconnect() }
+          .disabled(pending.any)
+      }
+
+      ToolbarItem(placement: .topBarTrailing) {
+        Button("Save") { handleSave() }
+          .disabled(pending.any)
+      }
+    }
+  }
 }

@@ -26,7 +26,8 @@ struct Config: Codable {
 @Observable
 final class ConfigManager {
   private let btm: BluetoothManager
-  private var initialized: Bool = false
+  
+  var initialized: Bool = false
 
   var wifiName: String = ""
   var wifiUsername: String = ""
@@ -44,9 +45,7 @@ final class ConfigManager {
     self.btm = bluetoothManager
   }
 
-  func loadDefaults() async throws {
-    if initialized { return }
-
+  func loadConfiguration() async throws {
     let service = try await btm.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
     let characteristic = try await btm.discoverCharacteristic(
       uuid: CONFIGURATION_CHARACTERISTIC_UUID,
@@ -96,5 +95,15 @@ final class ConfigManager {
     )
 
     try await btm.writeValue(for: characteristic, data: serializedConfig, timeout: 10)
+  }
+
+  func reboot() async throws {
+    let service = try await btm.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
+    let characteristic = try await btm.discoverCharacteristic(
+      uuid: RESTART_CHARACTERISTIC_UUID,
+      on: service
+    )
+
+    try await btm.writeValue(for: characteristic, data: Data(), timeout: 10)
   }
 }

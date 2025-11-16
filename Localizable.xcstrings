@@ -4,10 +4,34 @@
     "" : {
 
     },
+    "⚙️ General" : {
+
+    },
     "🐸 %@" : {
 
     },
     "🐸 Vogon" : {
+
+    },
+    "💩 Particulate matter" : {
+
+    },
+    "🔧 Advanced" : {
+
+    },
+    "🥵 Temp & humidity" : {
+
+    },
+    "🛜 WiFi & Sync" : {
+
+    },
+    "Amount of time asleep in minutes between sensor reads." : {
+
+    },
+    "Amount of time in seconds the sensor needs to warm up before taking readings." : {
+
+    },
+    "Amount of time in seconds waiting between each reading in a bulk." : {
 
     },
     "Configure" : {
@@ -33,6 +57,12 @@
     "No devices found" : {
 
     },
+    "Number of readings to average for each sensor read." : {
+
+    },
+    "Open" : {
+
+    },
     "Save" : {
 
     },
@@ -40,6 +70,18 @@
 
     },
     "Settings & configuration" : {
+
+    },
+    "The URL of the MQTT broker to send data to." : {
+
+    },
+    "WiFi Security" : {
+
+    },
+    "WPA2 Enterprise" : {
+
+    },
+    "WPA2 Personal" : {
 
     }
   },
