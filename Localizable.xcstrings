@@ -13,7 +13,13 @@
     "🐸 Vogon" : {
 
     },
+    "💁‍♂️ Account" : {
+
+    },
     "💩 Particulate matter" : {
+
+    },
+    "🔒 Sign in" : {
 
     },
     "🔧 Advanced" : {
@@ -25,6 +31,9 @@
     "🛜 WiFi & Sync" : {
 
     },
+    "Account" : {
+
+    },
     "Amount of time asleep in minutes between sensor reads." : {
 
     },
@@ -34,10 +43,22 @@
     "Amount of time in seconds waiting between each reading in a bulk." : {
 
     },
+    "API URL: %@" : {
+
+    },
     "Configure" : {
 
     },
+    "Discard and reboot" : {
+
+    },
+    "Discard changes" : {
+
+    },
     "Disconnect" : {
+
+    },
+    "Email" : {
 
     },
     "Found devices" : {
@@ -63,13 +84,22 @@
     "Open" : {
 
     },
+    "Password" : {
+
+    },
     "Save" : {
+
+    },
+    "Save & reboot" : {
 
     },
     "Scanning..." : {
 
     },
     "Settings & configuration" : {
+
+    },
+    "Sign In" : {
 
     },
     "The URL of the MQTT broker to send data to." : {
@@ -82,6 +112,12 @@
 
     },
     "WPA2 Personal" : {
+
+    },
+    "You are currently logged out." : {
+
+    },
+    "Your account" : {
 
     }
   },

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		B71AC5B92E93985C008B76A5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B71AC5B82E93985C008B76A5 /* Localizable.xcstrings */; };
+		B7590B692ECB866B0019F9E3 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = B7590B682ECB866B0019F9E3 /* KeychainAccess */; };
+		B75F69662ECBCCBE0022720D /* Toasts in Frameworks */ = {isa = PBXBuildFile; productRef = B75F69652ECBCCBE0022720D /* Toasts */; };
+		B79641862ECB7E6F007F5561 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = B79641852ECB7E6F007F5561 /* Alamofire */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +22,7 @@
 		B7F60EE82E1C28A500F0827D /* Exceptions for "Vogon" folder in "Vogon" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Config/.xcconfig,
 				Info.plist,
 			);
 			target = B7F60E982E1C23AE00F0827D /* Vogon */;
@@ -41,6 +45,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B7590B692ECB866B0019F9E3 /* KeychainAccess in Frameworks */,
+				B75F69662ECBCCBE0022720D /* Toasts in Frameworks */,
+				B79641862ECB7E6F007F5561 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +91,9 @@
 			);
 			name = Vogon;
 			packageProductDependencies = (
+				B79641852ECB7E6F007F5561 /* Alamofire */,
+				B7590B682ECB866B0019F9E3 /* KeychainAccess */,
+				B75F69652ECBCCBE0022720D /* Toasts */,
 			);
 			productName = Vogon;
 			productReference = B7F60E992E1C23AF00F0827D /* Vogon.app */;
@@ -97,7 +107,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					B7F60E982E1C23AE00F0827D = {
 						CreatedOnToolsVersion = 16.4;
@@ -113,6 +123,11 @@
 			);
 			mainGroup = B7F60E902E1C23AE00F0827D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B79641842ECB7E6F007F5561 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				B7590B672ECB866B0019F9E3 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+				B75F69642ECBCCBE0022720D /* XCRemoteSwiftPackageReference "swiftui-toasts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B7F60E9A2E1C23AF00F0827D /* Products */;
 			projectDirPath = "";
@@ -147,6 +162,8 @@
 /* Begin XCBuildConfiguration section */
 		B7F60EA22E1C23B000F0827D /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = B7F60E9B2E1C23AF00F0827D /* Vogon */;
+			baseConfigurationReferenceRelativePath = Config/Dev.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -366,6 +383,51 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B7590B672ECB866B0019F9E3 /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		B75F69642ECBCCBE0022720D /* XCRemoteSwiftPackageReference "swiftui-toasts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sunghyun-k/swiftui-toasts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
+			};
+		};
+		B79641842ECB7E6F007F5561 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B7590B682ECB866B0019F9E3 /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7590B672ECB866B0019F9E3 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+		B75F69652ECBCCBE0022720D /* Toasts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B75F69642ECBCCBE0022720D /* XCRemoteSwiftPackageReference "swiftui-toasts" */;
+			productName = Toasts;
+		};
+		B79641852ECB7E6F007F5561 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B79641842ECB7E6F007F5561 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B7F60E912E1C23AE00F0827D /* Project object */;
 }

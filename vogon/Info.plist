@@ -6,5 +6,13 @@
 	<array>
 		<string>bluetooth-central</string>
 	</array>
+
+	<key>APP_BUNDLE_ID</key>
+	<string>$(APP_BUNDLE_ID)</string>
+
+	<key>API_SCHEME</key>
+	<string>$(API_SCHEME)</string>
+	<key>API_HOST</key>
+	<string>$(API_HOST)</string>
 </dict>
 </plist>

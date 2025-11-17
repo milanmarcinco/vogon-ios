@@ -1,0 +1,4 @@
+APP_BUNDLE_ID = xyz.marcinco.vogon
+
+API_SCHEME = http
+API_HOST = x.x.x.x:3000
