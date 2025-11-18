@@ -6,6 +6,7 @@ struct SettingsAdvanced: View {
       NavigationLink("⚙️ General") { SettingsGeneral() }
       NavigationLink("🥵 Temp & humidity") { SettingsEnvironmental() }
       NavigationLink("💩 Particulate matter") { SettingsParticulate() }
+      NavigationLink("🔁 Sync") { SettingsSync() }
     }
     .navigationTitle("🔧 Advanced")
   }

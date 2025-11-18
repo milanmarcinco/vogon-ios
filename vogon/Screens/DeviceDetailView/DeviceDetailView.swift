@@ -68,7 +68,7 @@ struct DeviceDetailView: View {
   var body: some View {
     List {
       Section(header: Text("Settings & configuration")) {
-        NavigationLink("🛜 WiFi & Sync") { SettingsSync() }
+        NavigationLink("🛜 WiFi") { SettingsWifi() }
           .disabled(pending.load)
         NavigationLink("🔧 Advanced") { SettingsAdvanced() }
           .disabled(pending.load)
