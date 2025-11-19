@@ -24,14 +24,13 @@ struct AccountView: View {
   }
 
   var footerText: Text? {
-    if !authManager.initialized || authManager.isError {
-      return nil
-    }
-
-    if authManager.isAuthenticated {
+    switch authManager.status {
+    case .authenticated:
       return Text("You are currently signed in.")
-    } else {
+    case .unauthenticated:
       return Text("You are currently signed out.")
+    default:
+      return nil
     }
   }
 
@@ -42,23 +41,21 @@ struct AccountView: View {
           header: Text("Your account"),
           footer: footerText
         ) {
-          if !authManager.initialized {
+          if authManager.status == .pending {
             ProgressView()
           } else {
-            if authManager.isError {
+            if authManager.status == .error {
               Text("An error occurred while checking your authentication status.")
                 .foregroundStyle(.secondary)
             }
 
-            if !authManager.isError {
-              if !authManager.isAuthenticated {
-                NavigationLink("🔒 Sign in", destination: SignInView())
-              }
+            if authManager.status == .unauthenticated {
+              NavigationLink("🔒 Sign in", destination: SignInView())
+            }
 
-              if authManager.isAuthenticated {
-                Button("🚪 Sign out", action: signOut)
-                  .disabled(isPending)
-              }
+            if authManager.status == .authenticated {
+              Button("🚪 Sign out", action: signOut)
+                .disabled(isPending)
             }
           }
         }

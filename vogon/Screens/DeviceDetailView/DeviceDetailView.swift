@@ -27,7 +27,7 @@ struct DeviceDetailView: View {
       if configManager.initialized { return }
 
       pending.load = true
-      try await configManager.loadConfiguration()
+      await configManager.initialize()
       pending.load = false
     }
   }
@@ -67,6 +67,8 @@ struct DeviceDetailView: View {
 
   var body: some View {
     List {
+      DeviceStatusSection()
+
       Section(header: Text("Settings & configuration")) {
         NavigationLink("🛜 WiFi") { SettingsWifi() }
           .disabled(pending.load)

@@ -1,3 +1,4 @@
+import Alamofire
 import CoreBluetooth
 import SwiftUI
 
@@ -5,6 +6,12 @@ enum WifiProtocol: String, Codable {
   case open = "open"
   case wpa2 = "wpa2"
   case wpa2e = "wpa2e"  // enterprise
+}
+
+enum DeviceStatus {
+  case unknown
+  case pending
+  case registered
 }
 
 // Each field key is expected by the ESP32 firmware.
@@ -25,9 +32,11 @@ struct Config: Codable {
 
 @Observable
 final class ConfigManager {
-  private let btm: BluetoothManager
-  
+  private let authManager: AuthManager
+  private let bluetoothManager: BluetoothManager
+
   var initialized: Bool = false
+  private(set) var status: DeviceStatus = .unknown
 
   var wifiName: String = ""
   var wifiUsername: String = ""
@@ -41,18 +50,81 @@ final class ConfigManager {
   var particulateBulkSize: String = ""
   var particulateBulkSleep: String = ""
 
-  init(bluetoothManager: BluetoothManager) {
-    self.btm = bluetoothManager
+  init(
+    authManager: AuthManager,
+    bluetoothManager: BluetoothManager
+  ) {
+    self.authManager = authManager
+    self.bluetoothManager = bluetoothManager
+  }
+
+  func fetchDeviceStatus() async {
+    if authManager.status != .authenticated {
+      status = .unknown
+      return
+    }
+
+    status = .pending
+    var macAddress: String?
+
+    do {
+      let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
+      let characteristic = try await bluetoothManager.discoverCharacteristic(
+        uuid: MAC_ADDRESS_CHARACTERISTIC_UUID,
+        on: service
+      )
+
+      let data = try await bluetoothManager.readValue(for: characteristic)
+      macAddress = String(data: data, encoding: .utf8)
+    } catch {
+      status = .unknown
+      return
+    }
+
+    guard let macAddress else {
+      status = .unknown
+      return
+    }
+
+    let headers: HTTPHeaders = [.authorization(bearerToken: authManager.token!)]
+
+    let parameters: [String: String] = [
+      "macAddress": macAddress
+    ]
+
+    let response = await AF.request(
+      ApiRoutes.devices,
+      method: .post,
+      parameters: parameters,
+      headers: headers
+    )
+    .serializingData()
+    .response
+
+    if let status = response.response?.statusCode {
+      switch status {
+      case 200..<300:
+        self.status = .registered
+      default:
+        self.status = .unknown
+      }
+    }
+  }
+
+  func initialize() async {
+    if initialized { return }
+    try? await loadConfiguration()
+    self.initialized = true
   }
 
   func loadConfiguration() async throws {
-    let service = try await btm.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
-    let characteristic = try await btm.discoverCharacteristic(
+    let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
+    let characteristic = try await bluetoothManager.discoverCharacteristic(
       uuid: CONFIGURATION_CHARACTERISTIC_UUID,
       on: service
     )
 
-    let data = try await btm.readValue(for: characteristic)
+    let data = try await bluetoothManager.readValue(for: characteristic)
     let config = try JSONDecoder().decode(Config.self, from: data)
 
     self.wifiName = config.wifi_ssid ?? ""
@@ -66,8 +138,6 @@ final class ConfigManager {
     self.particulateWarmUp = config.particulate_warm_up.asString()
     self.particulateBulkSize = config.particulate_bulk_size.asString()
     self.particulateBulkSleep = config.particulate_bulk_sleep.asString()
-
-    self.initialized = true
   }
 
   func writeConfiguration() async throws {
@@ -88,22 +158,22 @@ final class ConfigManager {
     let encoder = JSONEncoder()
     let serializedConfig = try! encoder.encode(config)
 
-    let service = try await btm.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
-    let characteristic = try await btm.discoverCharacteristic(
+    let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
+    let characteristic = try await bluetoothManager.discoverCharacteristic(
       uuid: CONFIGURATION_CHARACTERISTIC_UUID,
       on: service
     )
 
-    try await btm.writeValue(for: characteristic, data: serializedConfig, timeout: 10)
+    try await bluetoothManager.writeValue(for: characteristic, data: serializedConfig, timeout: 10)
   }
 
   func reboot() async throws {
-    let service = try await btm.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
-    let characteristic = try await btm.discoverCharacteristic(
+    let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
+    let characteristic = try await bluetoothManager.discoverCharacteristic(
       uuid: RESTART_CHARACTERISTIC_UUID,
       on: service
     )
 
-    try await btm.writeValue(for: characteristic, data: Data(), timeout: 10)
+    try await bluetoothManager.writeValue(for: characteristic, data: Data(), timeout: 10)
   }
 }

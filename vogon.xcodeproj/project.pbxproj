@@ -11,10 +11,12 @@
 		B7590B692ECB866B0019F9E3 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = B7590B682ECB866B0019F9E3 /* KeychainAccess */; };
 		B75F69662ECBCCBE0022720D /* Toasts in Frameworks */ = {isa = PBXBuildFile; productRef = B75F69652ECBCCBE0022720D /* Toasts */; };
 		B79641862ECB7E6F007F5561 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = B79641852ECB7E6F007F5561 /* Alamofire */; };
+		B7B6F5F22ECCA91600CFC417 /* App.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = B7B6F5F12ECCA91600CFC417 /* App.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		B71AC5B82E93985C008B76A5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B7B6F5F12ECCA91600CFC417 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
 		B7F60E992E1C23AF00F0827D /* Vogon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vogon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -22,7 +24,6 @@
 		B7F60EE82E1C28A500F0827D /* Exceptions for "Vogon" folder in "Vogon" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Config/.xcconfig,
 				Info.plist,
 			);
 			target = B7F60E982E1C23AE00F0827D /* Vogon */;
@@ -60,6 +61,7 @@
 				B71AC5B82E93985C008B76A5 /* Localizable.xcstrings */,
 				B7F60E9B2E1C23AF00F0827D /* Vogon */,
 				B7F60E9A2E1C23AF00F0827D /* Products */,
+				B7B6F5F12ECCA91600CFC417 /* App.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -143,6 +145,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B7B6F5F22ECCA91600CFC417 /* App.xcconfig in Resources */,
 				B71AC5B92E93985C008B76A5 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -162,8 +165,7 @@
 /* Begin XCBuildConfiguration section */
 		B7F60EA22E1C23B000F0827D /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = B7F60E9B2E1C23AF00F0827D /* Vogon */;
-			baseConfigurationReferenceRelativePath = Config/Dev.xcconfig;
+			baseConfigurationReference = B7B6F5F12ECCA91600CFC417 /* App.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

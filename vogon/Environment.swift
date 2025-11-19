@@ -11,6 +11,7 @@ private struct BluetoothManagerKey: EnvironmentKey {
 
 private struct ConfigManagerKey: EnvironmentKey {
   static let defaultValue = ConfigManager(
+    authManager: AuthManager(),
     bluetoothManager: BluetoothManager()
   )
 }

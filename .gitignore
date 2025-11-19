@@ -1,4 +1,4 @@
-*.xcconfig
+App.xcconfig
 
 ## User settings
 xcuserdata/

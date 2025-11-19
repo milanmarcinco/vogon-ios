@@ -7,6 +7,14 @@ struct Token: Decodable {
   let token: String
 }
 
+enum AuthStatus {
+  case unknown
+  case pending
+  case authenticated
+  case unauthenticated
+  case error
+}
+
 enum AuthError: Error {
   case invalidCredentials
   case notAuthenticated
@@ -16,41 +24,41 @@ enum AuthError: Error {
 
 @Observable
 final class AuthManager {
-  let KEYCHAIN_ACCESS_TOKEN = "accessToken"
+  private let KEYCHAIN_ACCESS_TOKEN = "accessToken"
+  private let keychain = Keychain(service: AppConfig.APP_BUNDLE_ID)
 
-  private(set) var initialized = false
-  private(set) var isAuthenticated = false
-  private(set) var isError = false
-
+  private(set) var status: AuthStatus = .unknown
   private(set) var token: String? = nil
 
-  let keychain = Keychain(service: AppConfig.APP_BUNDLE_ID)
-
   func initialize() async {
-    if initialized { return }
+    if status != .unknown { return }
+    status = .pending
 
     if let savedToken = keychain[KEYCHAIN_ACCESS_TOKEN] {
-      self.token = savedToken
+      token = savedToken
     }
 
-    do {
-      self.isAuthenticated = try await me()
-    } catch {
-      self.isAuthenticated = false
-      self.isError = true
+    let authenticated = try? await me()
+
+    guard let authenticated else {
+      status = .error
+      return
     }
 
-    self.initialized = true
+    if authenticated {
+      status = .authenticated
+    } else {
+      status = .unauthenticated
+    }
   }
 
   func me() async throws -> Bool {
     guard let token else { return false }
 
-    let url = "\(AppConfig.API_URL)/auth/me"
     let headers: HTTPHeaders = [.authorization(bearerToken: token)]
 
     let response = await AF.request(
-      url,
+      ApiRoutes.me,
       method: .get,
       headers: headers
     )
@@ -72,15 +80,13 @@ final class AuthManager {
   }
 
   func signIn(email: String, password: String) async throws {
-    let url = "\(AppConfig.API_URL)/auth/sign-in"
-
     let parameters: [String: String] = [
       "email": email,
       "password": password,
     ]
 
     let response = await AF.request(
-      url,
+      ApiRoutes.signIn,
       method: .post,
       parameters: parameters,
       encoding: JSONEncoding.default
@@ -93,14 +99,13 @@ final class AuthManager {
       case 200..<300:
         if let payload = response.value {
           self.token = payload.token
-          self.isAuthenticated = true
+          self.status = .authenticated
 
           keychain[KEYCHAIN_ACCESS_TOKEN] = payload.token
           return
         } else {
           throw AuthError.internalError
         }
-
       case 401:
         throw AuthError.notAuthenticated
       default:
@@ -114,11 +119,10 @@ final class AuthManager {
   func signOut() async {
     guard let token else { return }
 
-    let url = "\(AppConfig.API_URL)/auth/sign-out"
     let headers: HTTPHeaders = [.authorization(bearerToken: token)]
 
     _ = await AF.request(
-      url,
+      ApiRoutes.signOut,
       method: .delete,
       headers: headers
     )
@@ -132,6 +136,6 @@ final class AuthManager {
     }
 
     self.token = nil
-    self.isAuthenticated = false
+    self.status = .unauthenticated
   }
 }

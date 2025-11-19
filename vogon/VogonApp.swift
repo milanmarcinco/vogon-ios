@@ -10,7 +10,11 @@ struct VogonApp: App {
   init() {
     let authManager = AuthManager()
     let bluetoothManager = BluetoothManager()
-    let configManager = ConfigManager(bluetoothManager: bluetoothManager)
+
+    let configManager = ConfigManager(
+      authManager: authManager,
+      bluetoothManager: bluetoothManager
+    )
 
     _authManager = State(wrappedValue: authManager)
     _bluetoothManager = State(wrappedValue: bluetoothManager)
