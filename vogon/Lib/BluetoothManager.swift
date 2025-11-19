@@ -17,60 +17,86 @@ struct ScannedPeripheral {
   var lastAdvertisedAt: Date
 }
 
-actor ContinuationMap<Value> {
+final class ContinuationMap<Value> {
   private var storage: [CBUUID: CheckedContinuation<Value, Error>] = [:]
+  private let queue = DispatchQueue(label: "ContinuationMap.queue.\(Value.self)")
 
   func set(_ uuid: CBUUID, _ continuation: CheckedContinuation<Value, Error>) {
-    storage[uuid] = continuation
+    queue.sync {
+      storage[uuid] = continuation
+    }
   }
 
   func peek(_ uuid: CBUUID) -> CheckedContinuation<Value, Error>? {
-    storage[uuid]
+    queue.sync {
+      storage[uuid]
+    }
   }
 
   func take(_ uuid: CBUUID) -> CheckedContinuation<Value, Error>? {
-    storage.removeValue(forKey: uuid)
+    queue.sync {
+      storage.removeValue(forKey: uuid)
+    }
   }
 
-  func clear() {
-    storage.removeAll()
+  func removeAll() {
+    queue.sync {
+      storage.removeAll()
+    }
   }
 
-  func forEach(_ body: (CBUUID, CheckedContinuation<Value, Error>) -> Void) {
-    for (uuid, continuation) in storage {
-      body(uuid, continuation)
+  func drainAll() -> [CBUUID: CheckedContinuation<Value, Error>] {
+    queue.sync {
+      let result = storage
+      storage.removeAll()
+      return result
     }
   }
 }
 
-actor TaskMap<Value> {
+final class TaskMap<Value> {
   private var storage: [CBUUID: Task<Value, Error>] = [:]
+  private let queue = DispatchQueue(label: "TaskMap.queue.\(Value.self)")
 
   func set(_ uuid: CBUUID, task: Task<Value, Error>) {
-    storage[uuid] = task
+    queue.sync {
+      storage[uuid] = task
+    }
   }
 
   func peek(_ uuid: CBUUID) -> Task<Value, Error>? {
-    storage[uuid]
+    queue.sync {
+      storage[uuid]
+    }
   }
 
   func take(_ uuid: CBUUID) -> Task<Value, Error>? {
-    storage.removeValue(forKey: uuid)
+    queue.sync {
+      storage.removeValue(forKey: uuid)
+    }
   }
 
-  func clear() {
-    storage.removeAll()
+  func removeAll() {
+    queue.sync {
+      storage.removeAll()
+    }
+  }
+
+  func drainAll() -> [CBUUID: Task<Value, Error>] {
+    queue.sync {
+      let result = storage
+      storage.removeAll()
+      return result
+    }
   }
 }
 
-actor ContinuationStore {
-  // Continuations (resumed by delegate)
+final class ContinuationStore {
   let services = ContinuationMap<CBService>()
   let characteristics = ContinuationMap<CBCharacteristic>()
   let reads = ContinuationMap<Data>()
   let writes = ContinuationMap<Void>()
 
-  // Tasks (awaited by callers)
   let serviceTasks = TaskMap<CBService>()
   let characteristicTasks = TaskMap<CBCharacteristic>()
 }
@@ -182,29 +208,24 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     self.scan()
   }
 
-  //  ===== ===== ===== =====
-
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: (any Error)?) {
-    Task {
-      if let error = error {
-        await continuationStore.services.forEach { _, cont in
-          cont.resume(throwing: error)
-        }
+    if let error = error {
+      // Resume all pending service continuations with error and clear tasks.
+      let continuations = continuationStore.services.drainAll()
+      continuationStore.serviceTasks.removeAll()
 
-        await continuationStore.services.clear()
-        await continuationStore.serviceTasks.clear()
-
-        return
+      for (_, cont) in continuations {
+        cont.resume(throwing: error)
       }
 
-      guard let services = peripheral.services else { return }
+      return
+    }
 
-      for service in services {
-        if let continuation =
-          await continuationStore.services.take(service.uuid)
-        {
-          continuation.resume(returning: service)
-        }
+    guard let services = peripheral.services else { return }
+
+    for service in services {
+      if let continuation = continuationStore.services.take(service.uuid) {
+        continuation.resume(returning: service)
       }
     }
   }
@@ -214,26 +235,25 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     didDiscoverCharacteristicsFor service: CBService,
     error: (any Error)?
   ) {
-    Task {
-      if let error = error {
-        await continuationStore.characteristics.forEach { _, continuation in
-          continuation.resume(throwing: error)
-        }
+    if let error = error {
+      // Resume all pending characteristic continuations with error and clear tasks.
+      let continuations = continuationStore.characteristics.drainAll()
+      continuationStore.characteristicTasks.removeAll()
 
-        await continuationStore.characteristics.clear()
-        await continuationStore.characteristicTasks.clear()
-
-        return
+      for (_, continuation) in continuations {
+        continuation.resume(throwing: error)
       }
 
-      guard let characteristics = service.characteristics else { return }
+      return
+    }
 
-      for characteristic in characteristics {
-        if let continuation =
-          await continuationStore.characteristics.take(characteristic.uuid)
-        {
-          continuation.resume(returning: characteristic)
-        }
+    guard let characteristics = service.characteristics else { return }
+
+    for characteristic in characteristics {
+      if let continuation =
+        continuationStore.characteristics.take(characteristic.uuid)
+      {
+        continuation.resume(returning: characteristic)
       }
     }
   }
@@ -243,23 +263,21 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     didUpdateValueFor characteristic: CBCharacteristic,
     error: (any Error)?
   ) {
-    Task {
-      guard
-        let continuation = await continuationStore.reads.take(characteristic.uuid)
-      else { return }
+    guard
+      let continuation = continuationStore.reads.take(characteristic.uuid)
+    else { return }
 
-      if let error = error {
-        continuation.resume(throwing: error)
-        return
-      }
-
-      guard let data = characteristic.value else {
-        continuation.resume(throwing: BluetoothError.internalError)
-        return
-      }
-
-      continuation.resume(returning: data)
+    if let error = error {
+      continuation.resume(throwing: error)
+      return
     }
+
+    guard let data = characteristic.value else {
+      continuation.resume(throwing: BluetoothError.internalError)
+      return
+    }
+
+    continuation.resume(returning: data)
   }
 
   func peripheral(
@@ -267,21 +285,17 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     didWriteValueFor characteristic: CBCharacteristic,
     error: (any Error)?
   ) {
-    Task {
-      guard
-        let continuation = await continuationStore.writes.take(characteristic.uuid)
-      else { return }
+    guard
+      let continuation = continuationStore.writes.take(characteristic.uuid)
+    else { return }
 
-      if let error = error {
-        continuation.resume(throwing: error)
-        return
-      }
-
-      continuation.resume(returning: ())
+    if let error = error {
+      continuation.resume(throwing: error)
+      return
     }
-  }
 
-  //  ===== ===== ===== =====
+    continuation.resume(returning: ())
+  }
 
   private func scan() {
     self.scanning = true
@@ -326,7 +340,7 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
 
   public func discoverService(uuid: CBUUID) async throws -> CBService {
     // 1. If there's already an in-flight discovery, reuse the task
-    if let existingTask = await continuationStore.serviceTasks.peek(uuid) {
+    if let existingTask = continuationStore.serviceTasks.peek(uuid) {
       return try await existingTask.value
     }
 
@@ -340,13 +354,8 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
           return
         }
 
-        // Store continuation for delegate
-        Task {
-          await self.continuationStore.services.set(
-            uuid,
-            continuation
-          )
-        }
+        // Store continuation for delegate BEFORE triggering discovery
+        self.continuationStore.services.set(uuid, continuation)
 
         // Trigger service discovery
         peripheral.discoverServices([uuid])
@@ -354,13 +363,13 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     }
 
     // 3. Cache the task for future callers
-    await continuationStore.serviceTasks.set(uuid, task: task)
+    continuationStore.serviceTasks.set(uuid, task: task)
 
     // 4. Wait for the result
     let service = try await task.value
 
     // 5. Clean up task if you want to prevent stale storage
-    _ = await continuationStore.serviceTasks.take(uuid)
+    _ = continuationStore.serviceTasks.take(uuid)
 
     return service
   }
@@ -371,7 +380,7 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
   ) async throws -> CBCharacteristic {
 
     // 1. If there's already an in-flight discovery for this UUID, reuse the task
-    if let existingTask = await continuationStore.characteristicTasks.peek(uuid) {
+    if let existingTask = continuationStore.characteristicTasks.peek(uuid) {
       return try await existingTask.value
     }
 
@@ -385,27 +394,25 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
           return
         }
 
-        // Store the continuation so the delegate can resume it later.
-        // This closure is not async, so we hop into a Task for the actor call.
-        Task {
-          await self.continuationStore.characteristics.set(
-            uuid,
-            continuation
-          )
+        // Store the continuation so the delegate can resume it later,
+        // BEFORE starting discovery to avoid races.
+        self.continuationStore.characteristics.set(
+          uuid,
+          continuation
+        )
 
-          peripheral.discoverCharacteristics([uuid], for: service)
-        }
+        peripheral.discoverCharacteristics([uuid], for: service)
       }
     }
 
     // 3. Store the task itself so later calls reuse it
-    await continuationStore.characteristicTasks.set(uuid, task: task)
+    continuationStore.characteristicTasks.set(uuid, task: task)
 
     // 4. This suspends until the continuation is resumed by the delegate
     let characteristic = try await task.value
 
     // 5. Optional cleanup of the cached task now that it's resolved
-    _ = await continuationStore.characteristicTasks.take(uuid)
+    _ = continuationStore.characteristicTasks.take(uuid)
 
     return characteristic
   }
@@ -422,12 +429,11 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             return
           }
 
-          Task {
-            await self.continuationStore.reads.set(
-              characteristic.uuid,
-              continuation
-            )
-          }
+          // Store continuation BEFORE triggering read
+          self.continuationStore.reads.set(
+            characteristic.uuid,
+            continuation
+          )
 
           peripheral.readValue(for: characteristic)
         }
@@ -457,12 +463,11 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             return
           }
 
-          Task {
-            await self.continuationStore.writes.set(
-              characteristic.uuid,
-              continuation
-            )
-          }
+          // Store continuation BEFORE triggering write
+          self.continuationStore.writes.set(
+            characteristic.uuid,
+            continuation
+          )
 
           peripheral.writeValue(data, for: characteristic, type: .withResponse)
         }
