@@ -2,14 +2,6 @@
 
 SwiftUI iOS app for discovering, connecting to, and configuring Vogon environmental sensor devices over Bluetooth Low Energy (BLE).
 
-## Screenshots
-
-|                                                                                                                                                                         |                                                                                                                                                       |
-| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: |
-|                       <img src="docs/screenshots/01-scanning.PNG" alt="Device scanning" width="420"><br>**Scanning:** Find nearby Vogon devices.                        |   <img src="docs/screenshots/02-device-home.PNG" alt="Device controls" width="420"><br>**Device controls:** Open settings, save changes, or reboot.   |
-|       <img src="docs/screenshots/03-wifi-settings.PNG" alt="Wi-Fi and MQTT settings" width="420"><br>**Wi-Fi & Sync:** Set Wi-Fi credentials and the MQTT broker.       | <img src="docs/screenshots/04-advanced-settings.PNG" alt="Advanced settings categories" width="420"><br>**Advanced:** Choose a sensor settings group. |
-| <img src="docs/screenshots/05-temp-and-rh-settings.PNG" alt="Temperature and humidity settings" width="420"><br>**Temperature & humidity:** Tune batch size and timing. |                                                                                                                                                       |
-
 ## Features
 
 - Automatic scanning for Vogon devices
@@ -41,3 +33,11 @@ Characteristic groups
 1. Open `vogon.xcodeproj` in Xcode 16 (or current).
 2. Ensure Bluetooth permission strings exist in `Info.plist`.
 3. Select an iOS device (physical recommended for BLE) and run.
+
+## Screenshots
+
+|                                                                                                                                                                         |                                                                                                                                                       |
+| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: |
+|                       <img src="docs/screenshots/01-scanning.PNG" alt="Device scanning" width="420"><br>**Scanning:** Find nearby Vogon devices.                        |   <img src="docs/screenshots/02-device-home.PNG" alt="Device controls" width="420"><br>**Device controls:** Open settings, save changes, or reboot.   |
+|       <img src="docs/screenshots/03-wifi-settings.PNG" alt="Wi-Fi and MQTT settings" width="420"><br>**Wi-Fi & Sync:** Set Wi-Fi credentials and the MQTT broker.       | <img src="docs/screenshots/04-advanced-settings.PNG" alt="Advanced settings categories" width="420"><br>**Advanced:** Choose a sensor settings group. |
+| <img src="docs/screenshots/05-temp-and-rh-settings.PNG" alt="Temperature and humidity settings" width="420"><br>**Temperature & humidity:** Tune batch size and timing. |                                                                                                                                                       |
