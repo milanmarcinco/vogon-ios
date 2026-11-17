@@ -18,7 +18,7 @@
                BlueprintIdentifier = "B7F60E982E1C23AE00F0827D"
                BuildableName = "Vogon.app"
                BlueprintName = "Vogon"
-               ReferencedContainer = "container:vogon.xcodeproj">
+               ReferencedContainer = "container:Vogon.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "B7F60E982E1C23AE00F0827D"
             BuildableName = "Vogon.app"
             BlueprintName = "Vogon"
-            ReferencedContainer = "container:vogon.xcodeproj">
+            ReferencedContainer = "container:Vogon.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "B7F60E982E1C23AE00F0827D"
             BuildableName = "Vogon.app"
             BlueprintName = "Vogon"
-            ReferencedContainer = "container:vogon.xcodeproj">
+            ReferencedContainer = "container:Vogon.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

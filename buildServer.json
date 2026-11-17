@@ -12,7 +12,7 @@
 	"argv": [
 		"/opt/homebrew/bin/xcode-build-server"
 	],
-	"workspace": "/Users/milanmarcinco/Projects/vogon/vogon-ios/vogon.xcodeproj/project.xcworkspace",
+	"workspace": "/Users/milanmarcinco/Projects/vogon/vogon-ios/Vogon.xcodeproj/project.xcworkspace",
 	"build_root": "/Users/milanmarcinco/Library/Developer/Xcode/DerivedData/vogon-bjiflwoybyorxhgtxmrvrumaxmfq",
 	"scheme": "Vogon",
 	"kind": "xcode"
