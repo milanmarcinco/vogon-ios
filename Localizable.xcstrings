@@ -37,6 +37,12 @@
     "Configure" : {
 
     },
+    "Discard and reboot" : {
+
+    },
+    "Discard changes" : {
+
+    },
     "Disconnect" : {
 
     },
@@ -64,6 +70,9 @@
 
     },
     "Save" : {
+
+    },
+    "Save & reboot" : {
 
     },
     "Scanning..." : {
