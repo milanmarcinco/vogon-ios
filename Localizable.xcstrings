@@ -19,6 +19,9 @@
     "💩 Particulate matter" : {
 
     },
+    "🔁 Sync" : {
+
+    },
     "🔒 Sign in" : {
 
     },
@@ -28,7 +31,10 @@
     "🥵 Temp & humidity" : {
 
     },
-    "🛜 WiFi & Sync" : {
+    "🚪 Sign out" : {
+
+    },
+    "🛜 WiFi" : {
 
     },
     "Account" : {
@@ -43,10 +49,13 @@
     "Amount of time in seconds waiting between each reading in a bulk." : {
 
     },
-    "API URL: %@" : {
+    "An error occurred while checking your authentication status." : {
 
     },
     "Configure" : {
+
+    },
+    "Device status" : {
 
     },
     "Discard and reboot" : {
@@ -75,6 +84,12 @@
         }
       }
     },
+    "MQTT Broker URL" : {
+
+    },
+    "mqtts://broker.example.com:8883" : {
+
+    },
     "No devices found" : {
 
     },
@@ -85,6 +100,9 @@
 
     },
     "Password" : {
+
+    },
+    "Registered ✅" : {
 
     },
     "Save" : {
@@ -102,7 +120,16 @@
     "Sign In" : {
 
     },
+    "Status" : {
+
+    },
     "The URL of the MQTT broker to send data to." : {
+
+    },
+    "Unknown" : {
+
+    },
+    "WiFi password" : {
 
     },
     "WiFi Security" : {
@@ -114,7 +141,10 @@
     "WPA2 Personal" : {
 
     },
-    "You are currently logged out." : {
+    "You are currently signed in." : {
+
+    },
+    "You are currently signed out." : {
 
     },
     "Your account" : {
