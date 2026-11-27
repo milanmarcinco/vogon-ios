@@ -28,6 +28,39 @@ struct Config: Codable {
   let particulate_warm_up: Int?
   let particulate_bulk_size: Int?
   let particulate_bulk_sleep: Int?
+  let co2_altitude: Int?
+  let co2_bulk_size: Int?
+  let co2_bulk_sleep: Int?
+}
+
+// Firmware defaults and valid ranges for the SCD41 CO2 sensor keys.
+// The firmware validates them only on boot; an invalid value sends the
+// device back into BLE setup mode, so the app must validate before writing.
+enum CO2Settings {
+  static let defaultAltitude = 0
+  static let defaultBulkSize = 3
+  static let defaultBulkSleep = 5
+
+  static let altitudeRange = 0...3000
+  static let minBulkSize = 1
+  static let minBulkSleep = 1
+}
+
+enum ConfigError: LocalizedError {
+  case notLoaded
+  case invalid
+  case tooLarge(size: Int, limit: Int)
+
+  var errorDescription: String? {
+    switch self {
+    case .notLoaded:
+      "The current configuration could not be read from the device. Reload it before saving."
+    case .invalid:
+      "Some settings have invalid values."
+    case .tooLarge(let size, let limit):
+      "The configuration is too large (\(size) bytes, the limit is \(limit) bytes). Shorten the WiFi or MQTT settings."
+    }
+  }
 }
 
 @Observable
@@ -49,6 +82,43 @@ final class ConfigManager {
   var particulateWarmUp: String = ""
   var particulateBulkSize: String = ""
   var particulateBulkSleep: String = ""
+  var co2Altitude: String = String(CO2Settings.defaultAltitude)
+  var co2BulkSize: String = String(CO2Settings.defaultBulkSize)
+  var co2BulkSleep: String = String(CO2Settings.defaultBulkSleep)
+
+  // The config object as last read from the device. Writes are merged into it,
+  // because a write replaces the whole stored config and unknown keys would be lost.
+  private var rawConfig: [String: Any]?
+
+  var co2AltitudeError: String? {
+    Self.validate(
+      co2Altitude,
+      min: CO2Settings.altitudeRange.lowerBound,
+      max: CO2Settings.altitudeRange.upperBound
+    )
+  }
+
+  var co2BulkSizeError: String? {
+    Self.validate(co2BulkSize, min: CO2Settings.minBulkSize)
+  }
+
+  var co2BulkSleepError: String? {
+    Self.validate(co2BulkSleep, min: CO2Settings.minBulkSleep)
+  }
+
+  var isValid: Bool {
+    co2AltitudeError == nil && co2BulkSizeError == nil && co2BulkSleepError == nil
+  }
+
+  private static func validate(_ value: String, min: Int, max: Int? = nil) -> String? {
+    guard let number = Int(value), number >= min, number <= (max ?? Int(Int32.max)) else {
+      if let max {
+        return String(localized: "Enter a whole number from \(min) to \(max).")
+      }
+      return String(localized: "Enter a whole number of at least \(min).")
+    }
+    return nil
+  }
 
   init(
     authManager: AuthManager,
@@ -126,6 +196,7 @@ final class ConfigManager {
 
     let data = try await bluetoothManager.readValue(for: characteristic)
     let config = try JSONDecoder().decode(Config.self, from: data)
+    let rawConfig = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
     self.wifiName = config.wifi_ssid ?? ""
     self.wifiUsername = config.wifi_username ?? ""
@@ -138,25 +209,49 @@ final class ConfigManager {
     self.particulateWarmUp = config.particulate_warm_up.asString()
     self.particulateBulkSize = config.particulate_bulk_size.asString()
     self.particulateBulkSleep = config.particulate_bulk_sleep.asString()
+    self.co2Altitude = config.co2_altitude.asString(String(CO2Settings.defaultAltitude))
+    self.co2BulkSize = config.co2_bulk_size.asString(String(CO2Settings.defaultBulkSize))
+    self.co2BulkSleep = config.co2_bulk_sleep.asString(String(CO2Settings.defaultBulkSleep))
+    self.rawConfig = rawConfig
+  }
+
+  // Merges the edited values into the config last read from the device.
+  // Integers are written as JSON numbers; the firmware ignores strings.
+  // An empty integer field removes its key, so the firmware uses its default.
+  func serializeConfiguration() throws -> Data {
+    guard var json = rawConfig else { throw ConfigError.notLoaded }
+    guard isValid else { throw ConfigError.invalid }
+
+    json["wifi_ssid"] = wifiName
+    json["wifi_username"] = wifiUsername
+    json["wifi_password"] = wifiPassword
+    json["wifi_protocol"] = wifiProtocol.rawValue
+    json["mqtt_broker_url"] = mqttBrokerUrl
+    json["measurement_interval"] = Int(measurementInterval)
+    json["environmental_bulk_size"] = Int(environmentalBulkSize)
+    json["environmental_bulk_sleep"] = Int(environmentalBulkSleep)
+    json["particulate_warm_up"] = Int(particulateWarmUp)
+    json["particulate_bulk_size"] = Int(particulateBulkSize)
+    json["particulate_bulk_sleep"] = Int(particulateBulkSleep)
+    json["co2_altitude"] = Int(co2Altitude)
+    json["co2_bulk_size"] = Int(co2BulkSize)
+    json["co2_bulk_sleep"] = Int(co2BulkSleep)
+
+    // Compact output (no whitespace, no escaped slashes) to fit in one ATT write.
+    return try JSONSerialization.data(
+      withJSONObject: json,
+      options: [.sortedKeys, .withoutEscapingSlashes]
+    )
   }
 
   func writeConfiguration() async throws {
-    let config = Config(
-      wifi_ssid: self.wifiName,
-      wifi_username: self.wifiUsername,
-      wifi_password: self.wifiPassword,
-      wifi_protocol: self.wifiProtocol,
-      mqtt_broker_url: self.mqttBrokerUrl,
-      measurement_interval: Int(self.measurementInterval),
-      environmental_bulk_size: Int(self.environmentalBulkSize),
-      environmental_bulk_sleep: Int(self.environmentalBulkSleep),
-      particulate_warm_up: Int(self.particulateWarmUp),
-      particulate_bulk_size: Int(self.particulateBulkSize),
-      particulate_bulk_sleep: Int(self.particulateBulkSleep)
-    )
+    let serializedConfig = try serializeConfiguration()
 
-    let encoder = JSONEncoder()
-    let serializedConfig = try! encoder.encode(config)
+    // The firmware rejects long (prepared) writes, so the config must fit in
+    // a single ATT write: the negotiated MTU minus 3 bytes.
+    if let limit = bluetoothManager.maximumSingleWriteLength, serializedConfig.count > limit {
+      throw ConfigError.tooLarge(size: serializedConfig.count, limit: limit)
+    }
 
     let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
     let characteristic = try await bluetoothManager.discoverCharacteristic(

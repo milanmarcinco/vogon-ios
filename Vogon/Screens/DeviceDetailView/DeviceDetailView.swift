@@ -17,6 +17,7 @@ struct DeviceDetailView: View {
   }
 
   @State private var pending = PendingStates()
+  @State private var errorMessage: String?
 
   private func handleDisconnect() {
     bluetoothManager.disconnect()
@@ -32,36 +33,35 @@ struct DeviceDetailView: View {
     }
   }
 
-  private func handleLoad() {
+  private func run(_ keyPath: WritableKeyPath<PendingStates, Bool>, _ action: @escaping () async throws -> Void) {
     Task {
-      pending.load = true
-      try await configManager.loadConfiguration()
-      pending.load = false
+      pending[keyPath: keyPath] = true
+      defer { pending[keyPath: keyPath] = false }
+
+      do {
+        try await action()
+      } catch {
+        errorMessage = error.localizedDescription
+      }
     }
+  }
+
+  private func handleLoad() {
+    run(\.load) { try await configManager.loadConfiguration() }
   }
 
   private func handleSave() {
-    Task {
-      pending.write = true
-      try await configManager.writeConfiguration()
-      pending.write = false
-    }
+    run(\.write) { try await configManager.writeConfiguration() }
   }
 
   private func handleDiscardAndReboot() {
-    Task {
-      pending.write = true
-      try await configManager.reboot()
-      pending.write = false
-    }
+    run(\.write) { try await configManager.reboot() }
   }
 
   private func handleSaveAndReboot() {
-    Task {
-      pending.write = true
+    run(\.write) {
       try await configManager.writeConfiguration()
       try await configManager.reboot()
-      pending.write = false
     }
   }
 
@@ -86,7 +86,12 @@ struct DeviceDetailView: View {
 
       Section {
         Button("Save & reboot", action: handleSaveAndReboot)
-          .disabled(pending.any)
+          .disabled(pending.any || !configManager.isValid)
+      } footer: {
+        if !configManager.isValid {
+          Text("Some settings have invalid values. Fix them before saving.")
+            .foregroundStyle(.red)
+        }
       }
     }
     .navigationBarBackButtonHidden(true)
@@ -100,8 +105,19 @@ struct DeviceDetailView: View {
 
       ToolbarItem(placement: .topBarTrailing) {
         Button("Save") { handleSave() }
-          .disabled(pending.any)
+          .disabled(pending.any || !configManager.isValid)
       }
+    }
+    .alert(
+      "Something went wrong",
+      isPresented: Binding(
+        get: { errorMessage != nil },
+        set: { if !$0 { errorMessage = nil } }
+      )
+    ) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text(errorMessage ?? "")
     }
   }
 }

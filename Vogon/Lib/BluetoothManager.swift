@@ -338,6 +338,13 @@ final class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     }
   }
 
+  // Largest value that fits in one ATT write (negotiated MTU - 3).
+  // For `.withResponse`, iOS reports 512 and silently falls back to prepared
+  // writes above the MTU, so the `.withoutResponse` value is the real limit.
+  public var maximumSingleWriteLength: Int? {
+    connectedPeripheral?.maximumWriteValueLength(for: .withoutResponse)
+  }
+
   public func discoverService(uuid: CBUUID) async throws -> CBService {
     // 1. If there's already an in-flight discovery, reuse the task
     if let existingTask = continuationStore.serviceTasks.peek(uuid) {
