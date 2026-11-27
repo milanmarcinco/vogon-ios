@@ -28,6 +28,20 @@ struct Config: Codable {
   let particulate_warm_up: Int?
   let particulate_bulk_size: Int?
   let particulate_bulk_sleep: Int?
+  let co2_altitude: Int?
+  let co2_bulk_size: Int?
+  let co2_bulk_sleep: Int?
+}
+
+enum ConfigError: LocalizedError {
+  case tooLarge(size: Int, limit: Int)
+
+  var errorDescription: String? {
+    switch self {
+    case .tooLarge(let size, let limit):
+      "The configuration is too large (\(size) bytes, the limit is \(limit) bytes). Shorten the WiFi or MQTT settings."
+    }
+  }
 }
 
 @Observable
@@ -49,6 +63,9 @@ final class ConfigManager {
   var particulateWarmUp: String = ""
   var particulateBulkSize: String = ""
   var particulateBulkSleep: String = ""
+  var co2Altitude: String = ""
+  var co2BulkSize: String = ""
+  var co2BulkSleep: String = ""
 
   init(
     authManager: AuthManager,
@@ -138,6 +155,9 @@ final class ConfigManager {
     self.particulateWarmUp = config.particulate_warm_up.asString()
     self.particulateBulkSize = config.particulate_bulk_size.asString()
     self.particulateBulkSleep = config.particulate_bulk_sleep.asString()
+    self.co2Altitude = config.co2_altitude.asString()
+    self.co2BulkSize = config.co2_bulk_size.asString()
+    self.co2BulkSleep = config.co2_bulk_sleep.asString()
   }
 
   func writeConfiguration() async throws {
@@ -152,11 +172,20 @@ final class ConfigManager {
       environmental_bulk_sleep: Int(self.environmentalBulkSleep),
       particulate_warm_up: Int(self.particulateWarmUp),
       particulate_bulk_size: Int(self.particulateBulkSize),
-      particulate_bulk_sleep: Int(self.particulateBulkSleep)
+      particulate_bulk_sleep: Int(self.particulateBulkSleep),
+      co2_altitude: Int(self.co2Altitude),
+      co2_bulk_size: Int(self.co2BulkSize),
+      co2_bulk_sleep: Int(self.co2BulkSleep)
     )
 
     let encoder = JSONEncoder()
+    encoder.outputFormatting = .withoutEscapingSlashes
     let serializedConfig = try! encoder.encode(config)
+
+    // The firmware rejects long (prepared) writes.
+    if let limit = bluetoothManager.maximumSingleWriteLength, serializedConfig.count > limit {
+      throw ConfigError.tooLarge(size: serializedConfig.count, limit: limit)
+    }
 
     let service = try await bluetoothManager.discoverService(uuid: CONFIGURATION_SERVICE_UUID)
     let characteristic = try await bluetoothManager.discoverCharacteristic(
